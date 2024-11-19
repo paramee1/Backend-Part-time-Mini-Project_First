@@ -1,10 +1,8 @@
 export const validateCreateBook = (req, res, next) => {
-  if (!req.body.title) {
-    return res.status(400).json({ error: "Invalid title provided" });
-  }
+  const { title, description, user_id } = req.body;
 
-  if (!req.body.description) {
-    return res.status(400).json({ error: "Invalid description provided" });
+  if (!title || !description || !user_id) {
+    return res.status(400).json({ message: "Missing required fields" });
   }
 
   next();

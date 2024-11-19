@@ -13,7 +13,18 @@ authRouter.post("/register", async (req, res) => {
     lastName: req.body.lastName,
   };
 
+  if (!username || !password || !firstName || !lastName) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
   try {
+    const userCheck = await connectionPool.query(
+      `SELECT * FROM users WHERE username = $1`,
+      [username]
+    );
+    if (userCheck.rows.length > 0) {
+      return res.status(404).json({ message: "Username already exists" });
+    }
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(user.password, salt);
 
@@ -25,19 +36,25 @@ authRouter.post("/register", async (req, res) => {
     return res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: "Failed to register user" });
+    res.status(500).json({ message: "Failed to register user" });
   }
 });
 
 authRouter.post("/login", async (req, res) => {
   const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ message: "Username and password are required" });
+  }
   try {
     const user = await connectionPool.query(
       `SELECT * FROM users WHERE username = $1`,
       [username]
     );
 
-    if (!user) {
+    if (user.rows.length === 0) {
       return res.status(404).json({ message: "user not found" });
     }
 
